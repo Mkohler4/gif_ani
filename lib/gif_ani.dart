@@ -8,15 +8,16 @@ import 'dart:async';
 class GifController extends AnimationController{
   ///gif有多少个帧
   final int frameCount;
+
   GifController({
-    @required this.frameCount,
-    @required TickerProvider vsync,
-    double value,
-    Duration duration,
-    String debugLabel,
-    double lowerBound,
-    double upperBound,
-    AnimationBehavior animationBehavior
+    required this.frameCount,
+    required TickerProvider vsync,
+    double? value,
+    Duration? duration,
+    String? debugLabel,
+    double? lowerBound,
+    double? upperBound,
+    AnimationBehavior? animationBehavior
   }):super(
     value:value,
     duration:duration,
@@ -44,8 +45,8 @@ class GifController extends AnimationController{
 
 class GifAnimation extends StatefulWidget{
   GifAnimation({
-    @required this.image,
-    @required this.controller,
+    required this.image,
+    required this.controller,
     this.semanticLabel,
     this.excludeFromSemantics = false,
     this.width,
@@ -61,18 +62,18 @@ class GifAnimation extends StatefulWidget{
   });
   final GifController controller;
   final ImageProvider image;
-  final double width;
-  final double height;
-  final Color color;
-  final BlendMode colorBlendMode;
-  final BoxFit fit;
-  final AlignmentGeometry alignment;
-  final ImageRepeat repeat;
-  final Rect centerSlice;
-  final bool matchTextDirection;
-  final bool gaplessPlayback;
-  final String semanticLabel;
-  final bool excludeFromSemantics;
+  final double? width;
+  final double? height;
+  final Color? color;
+  final BlendMode? colorBlendMode;
+  final BoxFit? fit;
+  final AlignmentGeometry? alignment;
+  final ImageRepeat? repeat;
+  final Rect? centerSlice;
+  final bool? matchTextDirection;
+  final bool? gaplessPlayback;
+  final String? semanticLabel;
+  final bool? excludeFromSemantics;
   @override
   State<StatefulWidget> createState() {
     return new _AnimatedImageState();
@@ -80,10 +81,10 @@ class GifAnimation extends StatefulWidget{
 }
 
 class _AnimatedImageState extends State<GifAnimation>{
-  Tween<double> _tween;
-  List<ImageInfo> _infos;
+  late Tween<double> _tween;
+  List<ImageInfo>? _infos;
   int _curIndex = 0;
-  ImageInfo get _imageInfo => _infos==null?null:_infos[_curIndex];
+  ImageInfo? get _imageInfo => _infos==null?null:_infos![_curIndex];
 
   @override
   void initState() {
@@ -109,7 +110,6 @@ class _AnimatedImageState extends State<GifAnimation>{
 
   void _listener(){
     int _idx = _tween.evaluate(widget.controller)~/1;
-    print("idx:$_idx");
     if(_idx>=widget.controller.frameCount){
       _idx = widget.controller.frameCount-1;
     }
@@ -147,12 +147,12 @@ class _AnimatedImageState extends State<GifAnimation>{
       color: widget.color,
       colorBlendMode: widget.colorBlendMode,
       fit: widget.fit,
-      alignment: widget.alignment,
-      repeat: widget.repeat,
+      alignment: widget.alignment!,
+      repeat: widget.repeat!,
       centerSlice: widget.centerSlice,
-      matchTextDirection: widget.matchTextDirection,
+      matchTextDirection: widget.matchTextDirection!,
     );
-    if (widget.excludeFromSemantics)
+    if (widget.excludeFromSemantics!)
       return image;
     return new Semantics(
       container: widget.semanticLabel != null,
@@ -164,11 +164,11 @@ class _AnimatedImageState extends State<GifAnimation>{
 }
 
 Future<List<ImageInfo>> preloadImage({
-  @required ImageProvider provider,
-  @required BuildContext context,
+  required ImageProvider provider,
+  required BuildContext context,
   int frameCount:1,
-  Size size,
-  ImageErrorListener onError,
+  Size? size,
+  ImageErrorListener? onError,
 }) {
   final ImageConfiguration config = createLocalImageConfiguration(context, size: size);
   final Completer<List<ImageInfo>> completer = new Completer<List<ImageInfo>>();
@@ -188,7 +188,6 @@ Future<List<ImageInfo>> preloadImage({
       onError(exception, stackTrace);
     } else {
       FlutterError.reportError(new FlutterErrorDetails(
-        context: 'image failed to precache',
         library: 'image resource service',
         exception: exception,
         stack: stackTrace,
@@ -196,8 +195,12 @@ Future<List<ImageInfo>> preloadImage({
       ));
     }
   }
-  stream.addListener(listener, onError: errorListener);
-  completer.future.then((List<ImageInfo> _) { stream.removeListener(listener); });
+  stream.addListener(ImageStreamListener((image, synchronousCall) { 
+    listener(image, synchronousCall);
+  }));
+  completer.future.then((List<ImageInfo> _) { stream.removeListener(ImageStreamListener((image, synchronousCall) { 
+    listener(image, synchronousCall);
+  })); });
   return completer.future;
 }
 
